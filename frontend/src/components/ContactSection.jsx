@@ -1,0 +1,162 @@
+import React, { useState, useRef } from "react";
+import { motion } from "framer-motion";
+import { initializeApp } from "firebase/app";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import ReCAPTCHA from "react-google-recaptcha";
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+
+export default function ContactSection() {
+  const [status, setStatus] = useState(null);
+  const [form, setForm] = useState({ email: "", message: "" });
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const recaptchaRef = useRef(null);
+
+  // Debug: Check if site key is loaded
+  if (!RECAPTCHA_SITE_KEY) {
+    console.error("reCAPTCHA site key is not defined. Check your .env file.");
+  }
+
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const onCaptchaChange = (token) => {
+    setCaptchaToken(token);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Check if captcha is completed
+    if (!captchaToken) {
+      setStatus("captcha_required");
+      return;
+    }
+
+    setStatus("loading");
+
+    try {
+      // Store message with reCAPTCHA token
+      await addDoc(collection(db, "messages"), {
+        email: form.email,
+        message: form.message,
+        recaptchaToken: captchaToken,
+        created: serverTimestamp(),
+      });
+
+      setStatus("sent");
+      setForm({ email: "", message: "" });
+      setCaptchaToken(null);
+      
+      // Reset reCAPTCHA
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
+    } catch (err) {
+      console.error("Error submitting form:", err);
+      setStatus("error");
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center border border-dashed border-[#3c3b3b] rounded-xl p-4 sm:p-6 md:p-8 mt-12 mb-4 w-full max-w-2xl mx-auto">
+      <section
+        id="contact"
+        className="w-full flex flex-col md:flex-row items-start justify-between gap-8"
+      >
+        <div className="flex-1 flex flex-col justify-center mb-6 md:mb-0 text-left">
+          <h2 className="text-lg sm:text-xl font-semibold mb-2 text-gray-200">
+            Let's Connect
+          </h2>
+          <p className="text-gray-400 text-sm">
+            Have an idea or want to collaborate? <br />
+            Drop a message and I’ll get back to you soon.
+          </p>
+        </div>
+        <div className="flex-1 flex flex-col items-start md:items-end w-full">
+          <form
+            className="flex flex-col gap-3 w-full max-w-full sm:max-w-xs"
+            onSubmit={handleSubmit}
+          >
+            <input
+              className="bg-[#18181b] rounded px-3 py-2 text-white focus:outline-none text-sm w-full"
+              type="email"
+              name="email"
+              placeholder="Your email"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
+            <textarea
+              className="bg-[#18181b] rounded px-3 py-2 text-white focus:outline-none text-sm w-full"
+              name="message"
+              placeholder="Your message"
+              rows={4}
+              value={form.message}
+              onChange={handleChange}
+              required
+            />
+            
+            {/* reCAPTCHA v2 Checkbox */}
+            {RECAPTCHA_SITE_KEY ? (
+              <div className="flex justify-start">
+                <ReCAPTCHA
+                  ref={recaptchaRef}
+                  sitekey={RECAPTCHA_SITE_KEY}
+                  onChange={onCaptchaChange}
+                  theme="dark"
+                />
+              </div>
+            ) : (
+              <div className="text-red-400 text-xs">
+                reCAPTCHA configuration error. Please contact the administrator.
+              </div>
+            )}
+
+            <motion.button
+              type="submit"
+              className="bg-[#f5f5f7] text-[#080808] rounded px-4 py-2 font-semibold mt-2 text-sm"
+              whileTap={{ scale: 0.97 }}
+              whileHover={{ scale: 1.03 }}
+              disabled={status === "loading"}
+            >
+              {status === "loading"
+                ? "Sending..."
+                : status === "error"
+                ? "Error! Try again"
+                : "Send"}
+            </motion.button>
+            {status === "sent" && (
+              <span className="text-green-400 text-xs mt-1">Message sent!</span>
+            )}
+            {status === "captcha_required" && (
+              <span className="text-red-400 text-xs mt-1">Please complete the CAPTCHA</span>
+            )}
+          </form>
+          <span className="text-xs text-gray-400 mt-4">
+            dharanidharan.sr@outlook.com
+          </span>
+        </div>
+      </section>
+    </div>
+  );
+}
