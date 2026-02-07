@@ -75,36 +75,36 @@ workflows:
       - terraform_init:
           filters:
             branches:
-              only: AWS
+              only: main
       - terraform_plan:
           requires:
             - terraform_init
           filters:
             branches:
-              only: AWS
+              only: main
       - hold1:
           type: approval
           requires:
             - terraform_plan
           filters:
             branches:
-              only: AWS
+              only: main
       - terraform_apply:
           requires:
             - hold1
           filters:
             branches:
-              only: AWS
+              only: main
       - hold:
           type: approval
           requires:
             - terraform_plan
           filters:
             branches:
-              only: AWS
+              only: main
       - terraform_destroy:
           requires:
             - hold
           filters:
             branches:
-              only: AWS
+              only: main
