@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "us-east-1"  
+  region = "eu-north-1"  
 }
 
 
@@ -7,7 +7,7 @@ terraform {
   backend "s3" {
     bucket = "dharanidharan-terraform-state"
     key    = "portfolio/terraform.tfstate"
-    region = "us-east-1"
+    region = "eu-north-1"
   }
 }
 
@@ -38,8 +38,8 @@ resource "aws_security_group" "instance_sg" {
 }
 
 resource "aws_instance" "Portfolio" {
-  ami                    = "ami-08a0d1e16fc3f61ea"  
-  instance_type          = "t2.micro"
+  ami                    = "ami-08eb150f611ca277f"  
+  instance_type          = "t3.micro"
   key_name               = "dharanidharan-key"  
   security_groups        = [aws_security_group.instance_sg.name]
   associate_public_ip_address = true
