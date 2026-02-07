@@ -5,15 +5,15 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket = "tf-rp-states"
-    key    = "jayasurya/terraform.tfstate"
+    bucket = "dharanidharan-terraform-state"
+    key    = "portfolio/terraform.tfstate"
     region = "us-east-1"
   }
 }
 
 resource "aws_security_group" "instance_sg" {
-  name        = "reactClient_sg"
-  description = "Security group for EC2 instance"
+  name        = "portfolio_sg"
+  description = "Security group for Portfolio EC2 instance"
 
   ingress {
     from_port   = 80
@@ -37,10 +37,10 @@ resource "aws_security_group" "instance_sg" {
   }
 }
 
-resource "aws_instance" "ReactQuotes" {
+resource "aws_instance" "Portfolio" {
   ami                    = "ami-08a0d1e16fc3f61ea"  
   instance_type          = "t2.micro"
-  key_name               = "jaya"  
+  key_name               = "dharanidharan-key"  
   security_groups        = [aws_security_group.instance_sg.name]
   associate_public_ip_address = true
 
@@ -54,10 +54,10 @@ resource "aws_instance" "ReactQuotes" {
               EOF
 
   tags = {
-    Name = "portfolio-instance"
+    Name = "dharanidharan-portfolio"
   }
 }
 
 output "public_ip" {
-  value = aws_instance.ReactQuotes.public_ip
+  value = aws_instance.Portfolio.public_ip
 }
