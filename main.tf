@@ -40,7 +40,7 @@ resource "aws_security_group" "instance_sg" {
 resource "aws_instance" "Portfolio" {
   ami                    = "ami-08eb150f611ca277f"  
   instance_type          = "t3.micro"
-  key_name               = "dharanidharan-key"  
+  key_name               = "devops-key"
   security_groups        = [aws_security_group.instance_sg.name]
   associate_public_ip_address = true
 
