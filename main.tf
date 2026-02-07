@@ -50,7 +50,13 @@ resource "aws_instance" "Portfolio" {
               sudo yum install -y docker
               sudo service docker start
               sudo usermod -a -G docker ec2-user
-              sudo docker run -d -p 80:80 dharanidharansr/portfolio
+              
+              # Pull and run the latest Docker image
+              sudo docker pull dharanidharansr/portfolio:latest
+              sudo docker run -d -p 80:80 --restart unless-stopped dharanidharansr/portfolio:latest
+              
+              # Create a cron job to check for updates every hour
+              echo "0 * * * * docker pull dharanidharansr/portfolio:latest && docker stop \$(docker ps -q --filter ancestor=dharanidharansr/portfolio:latest) && docker run -d -p 80:80 --restart unless-stopped dharanidharansr/portfolio:latest" | sudo crontab -
               EOF
 
   tags = {
